@@ -4,7 +4,10 @@ A Secured PINF JavaScript Loader Sandbox
 ========================================
 
 A [PINF JavaScript Loader Sandbox](https://github.com/pinf/pinf-loader-js)
-that polices bundle and resource uris to allow only declared and known assets.
+that polices bundles and resources to allow only declared and known assets.
+
+Uses the [Stanford Javascript Crypto Library](https://github.com/bitwiseshiftleft/sjcl)
+to verify checksums and signatures.
 
 
 Install

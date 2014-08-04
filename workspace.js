@@ -20,6 +20,13 @@ return PINF.main(function(options, callback) {
 			.pipe(res);
 	});
 
+	app.get(/^\/test\/assets\/bundles\/(.+)$/, function (req, res, next) {
+		return SEND(req, req.params[0])
+			.root(PATH.join(__dirname, "test/assets/bundles"))
+			.on("error", next)
+			.pipe(res);
+	});
+
 	app.get(/^\/workspace\/client(\/app.+)$/, PINF.hoist(PATH.join(__dirname, "workspace/client/program.json"), options.$pinf.makeOptions({
 		debug: true,
 		verbose: true,

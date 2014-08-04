@@ -1,0 +1,21 @@
+{
+  "uid": "github.com/pinf/pinf-loader-sandbox-secure",
+  "main": "./lib/pinf-loader-sandbox-secure.js",
+  "exports": {
+    "bundles": {
+      "lib/pinf-loader-sandbox-secure.js": "./lib/pinf-loader-sandbox-secure.js"
+    }
+  },
+  "dependencies": {
+    "sjcl": "^1.0.1"
+  },
+  "devDependencies": {
+    "compression": "^1.0.9",
+    "express": "^4.7.2",
+    "pinf-for-nodejs": "^0.1.5",
+    "send": "^0.7.3"
+  },
+  "scripts": {
+    "install": "cd node_modules/sjcl; ./configure --with-ecc; make"
+  }
+}

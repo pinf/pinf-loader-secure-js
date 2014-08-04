@@ -1,0 +1,9 @@
+{
+  "uid": "github.com/pinf/pinf-loader-sandbox-secure/workspace/client",
+  "main": "./app.js",
+  "exports": {
+    "bundles": {
+      "app.js": "./app.js"
+    }
+  }
+}

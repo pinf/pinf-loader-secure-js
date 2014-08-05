@@ -1,13 +1,18 @@
 *Status: DEV*
 
-A Secured PINF JavaScript Loader Sandbox
-========================================
+A Secured PINF JavaScript Loader
+================================
 
-A [PINF JavaScript Loader Sandbox](https://github.com/pinf/pinf-loader-js)
-that polices bundles and resources to allow only declared and known assets.
+A [PINF JavaScript Loader](https://github.com/pinf/pinf-loader-js) Sandbox
+and middleware that polices bundles and resources to allow only declared
+and known assets into a sandbox.
 
 Uses the [Stanford Javascript Crypto Library](https://github.com/bitwiseshiftleft/sjcl)
-to verify checksums and signatures.
+and [eccjs](https://github.com/jpillora/eccjs) to verify checksums and signatures.
+
+The weight of the client sandbox security layer currently comes in at
+around **25KB minified and gzipped**. With some optimization this *may* be
+reduced to 20KB.
 
 
 Install
@@ -35,8 +40,9 @@ Install:
 
 Run:
 
-    node workspace.js
+    node workspace/server.js
     open http://localhost:3000/
+    # Look for 'Hello World' in console
 
 
 License

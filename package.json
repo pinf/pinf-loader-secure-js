@@ -1,21 +1,16 @@
 {
-  "uid": "github.com/pinf/pinf-loader-sandbox-secure",
-  "main": "./lib/pinf-loader-sandbox-secure.js",
-  "exports": {
-    "bundles": {
-      "lib/pinf-loader-sandbox-secure.js": "./lib/pinf-loader-sandbox-secure.js"
-    }
-  },
+  "uid": "github.com/pinf/pinf-loader-secure-js",
   "dependencies": {
-    "sjcl": "^1.0.1"
+    "express-hijackresponse": "^0.1.2",
+    "send": "^0.7.3",
+    "sjcl": "git://github.com/bitwiseshiftleft/sjcl.git#b52f843f9e59ee6666cd123b5cacf7954c010f08"
   },
   "devDependencies": {
     "compression": "^1.0.9",
     "express": "^4.7.2",
-    "pinf-for-nodejs": "^0.1.5",
-    "send": "^0.7.3"
+    "pinf-for-nodejs": "git://github.com/pinf/pinf-for-nodejs.git#9b089c362abccb781dbae4e68206c7db4780f19b"
   },
   "scripts": {
-    "install": "cd node_modules/sjcl; ./configure --with-ecc; make"
+    "install": "cd node_modules/sjcl; ./configure --with-ecc --compress=none; make"
   }
 }

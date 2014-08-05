@@ -1,13 +1,15 @@
 
-exports.main = function() {
+exports.main = function(options) {
 
-	return require.sandbox("/lib/pinf-loader-sandbox-secure.js", {
+	var uri = "/client/sandbox.js";
+
+	return require.sandbox(uri, {
 
 	}, function(sandbox) {
 
-		return sandbox.main();
+		return sandbox.main(options);
 
 	}, function (err) {
-		console.error("Error while loading bundle '/lib/pinf-loader-sandbox-secure.js':", err.stack);
+		console.error("Error while loading bundle '" + uri + "':", err.stack);
 	});
 }

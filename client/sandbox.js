@@ -54,6 +54,11 @@ exports.main = function(options) {
 
 			var verified = false;
 
+			// NOTE: For the following verification implementation to work,
+			//       the return value of `callback.toString()` must be an
+			//       EXACT copy of the source code sent to the browser
+			//       by the server.
+
 			// A signature is preferred but optional.
 
 			if (typeof meta.signature === "string") {

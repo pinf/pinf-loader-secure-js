@@ -1,5 +1,7 @@
 {
   "uid": "github.com/pinf/pinf-loader-secure-js",
+  "name": "pinf-loader-secure-js",
+  "version": "0.0.0",
   "dependencies": {
     "express-hijackresponse": "^0.1.2",
     "send": "^0.7.3",

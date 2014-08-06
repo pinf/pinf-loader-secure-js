@@ -39,12 +39,15 @@ return PINF.main(function(options, callback) {
         $pinf: options.$pinf
     })));
 
+	/*
+	// TODO: Move to build only.
 	app.get(/\/client(\/sandbox.+)$/, PINF.hoist(PATH.join(__dirname, "../client/program.json"), options.$pinf.makeOptions({
 		debug: true,
 		verbose: true,
 		PINF_RUNTIME: "",
         $pinf: options.$pinf
     })));
+	*/
 
 	app.get(/^\/$/, function (req, res, next) {
 		var html = [

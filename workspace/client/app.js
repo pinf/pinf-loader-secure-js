@@ -1,15 +1,17 @@
 
+const SECURE = require("pinf-loader-secure");
+
+
 exports.main = function(options) {
 
-	var uri = "/client/sandbox.js";
+	var uri = "/test/assets/bundles/HelloWorld.js";
 
-	return require.sandbox(uri, {
+	return SECURE.sandbox(uri, options, function(sandbox) {
 
-	}, function(sandbox) {
-
-		return sandbox.main(options);
+		return sandbox.main();
 
 	}, function (err) {
 		console.error("Error while loading bundle '" + uri + "':", err.stack);
 	});
+
 }

@@ -5,5 +5,8 @@
     "bundles": {
       "app.js": "./app.js"
     }
+  },
+  "mappings": {
+  	"pinf-loader-secure": "../../client"
   }
 }

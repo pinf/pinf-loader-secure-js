@@ -8,9 +8,10 @@
   "devDependencies": {
     "compression": "^1.0.9",
     "express": "^4.7.2",
-    "pinf-for-nodejs": "git://github.com/pinf/pinf-for-nodejs.git#e426fea719887b760157cdfc4c05d0ea2d23baf4"
+    "pinf-for-nodejs": "git://github.com/pinf/pinf-for-nodejs.git#3c0946265dee0876d0d7ed2a221db18419f789ae"
   },
   "scripts": {
-    "install": "cd node_modules/sjcl; ./configure --with-ecc --compress=none; make"
+    "install": "cd node_modules/sjcl; ./configure --with-ecc --compress=none; make",
+    "build": "cd client; ../node_modules/.bin/pinf bundle"
   }
 }

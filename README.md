@@ -101,6 +101,11 @@ Run:
     open http://localhost:3000/
     # Look for 'Hello World' in console
 
+Publish:
+
+	npm run-script build
+	# Commit code
+
 
 License
 =======

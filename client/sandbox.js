@@ -3,6 +3,10 @@ const SJCL = require("sjcl");
 const ECC = require("./ecc");
 
 
+exports.main = function() {
+	return exports;
+}
+
 exports.sandbox = function(sandboxIdentifier, sandboxOptions, loadedCallback, errorCallback) {
 
 	if (!sandboxIdentifier) {
@@ -23,15 +27,15 @@ exports.sandbox = function(sandboxIdentifier, sandboxOptions, loadedCallback, er
 	}
 
 	if (typeof sandboxOptions.secure !== "object") {
-		throw new Error("'secure' property not set!");
+		return errorCallback(new Error("'secure' property not set!"));
 	}
 	if (typeof sandboxOptions.secure.bundles !== "object") {
-		throw new Error("'secure.bundles' property not set!");
+		return errorCallback(new Error("'secure.bundles' property not set!"));
 	}
 
 	var signatures = {};
 	sandboxOptions.secure.bundles.filter(function(bundle) {
-		return /^eccver:/.test(bundle);
+		return /^eccver:/.test(bundle) && !/^eccver:\*$/.test(bundle);
 	}).map(function (bundle) {
 		var key = bundle.match(/^eccver:(.{7})/)[1];
 		if (!signatures[key]) {

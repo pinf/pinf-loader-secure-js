@@ -46,9 +46,7 @@ exports.sandbox = function(sandboxIdentifier, sandboxOptions, loadedCallback, er
 
 	// TODO: Keep track of different instances of `PINF.bundle()`
 	//       so we can allow multiple secure sandboxes at the same time.
-
-	var _orig_bundle = PINF.bundle;
-	PINF.bundle = function(uid, callback, meta) {
+	var _orig_bundle_handler = PINF.setActiveBundleHandler(function(uid, callback, meta) {
 
 		if (!meta || typeof meta !== "object") {
 			throw new Error("No meta data supplied for bundle '" + uid + "'!");
@@ -104,8 +102,8 @@ exports.sandbox = function(sandboxIdentifier, sandboxOptions, loadedCallback, er
 			}
 		}
 
-		return _orig_bundle(uid, callback);
-	}
+		return _orig_bundle_handler(uid, callback);
+	});
 
 	return require.sandbox(sandboxIdentifier, sandboxOptions, loadedCallback, errorCallback);
 }

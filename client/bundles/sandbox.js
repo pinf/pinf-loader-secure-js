@@ -1,12 +1,16 @@
 // @pinf-bundle-ignore: 
 PINF.bundle("", function(require) {
-// @pinf-bundle-module: {"file":"sandbox.js","mtime":1407303920,"wrapper":"commonjs","format":"commonjs","id":"/sandbox.js"}
+// @pinf-bundle-module: {"file":"sandbox.js","mtime":1407997188,"wrapper":"commonjs","format":"commonjs","id":"/sandbox.js"}
 require.memoize("/sandbox.js", 
 function(require, exports, module) {var __dirname = '';
 
 const SJCL = require("sjcl");
 const ECC = require("./ecc");
 
+
+exports.main = function() {
+	return exports;
+}
 
 exports.sandbox = function(sandboxIdentifier, sandboxOptions, loadedCallback, errorCallback) {
 
@@ -28,15 +32,15 @@ exports.sandbox = function(sandboxIdentifier, sandboxOptions, loadedCallback, er
 	}
 
 	if (typeof sandboxOptions.secure !== "object") {
-		throw new Error("'secure' property not set!");
+		return errorCallback(new Error("'secure' property not set!"));
 	}
 	if (typeof sandboxOptions.secure.bundles !== "object") {
-		throw new Error("'secure.bundles' property not set!");
+		return errorCallback(new Error("'secure.bundles' property not set!"));
 	}
 
 	var signatures = {};
 	sandboxOptions.secure.bundles.filter(function(bundle) {
-		return /^eccver:/.test(bundle);
+		return /^eccver:/.test(bundle) && !/^eccver:\*$/.test(bundle);
 	}).map(function (bundle) {
 		var key = bundle.match(/^eccver:(.{7})/)[1];
 		if (!signatures[key]) {
@@ -47,9 +51,7 @@ exports.sandbox = function(sandboxIdentifier, sandboxOptions, loadedCallback, er
 
 	// TODO: Keep track of different instances of `PINF.bundle()`
 	//       so we can allow multiple secure sandboxes at the same time.
-
-	var _orig_bundle = PINF.bundle;
-	PINF.bundle = function(uid, callback, meta) {
+	var _orig_bundle_handler = PINF.setActiveBundleHandler(function(uid, callback, meta) {
 
 		if (!meta || typeof meta !== "object") {
 			throw new Error("No meta data supplied for bundle '" + uid + "'!");
@@ -105,15 +107,15 @@ exports.sandbox = function(sandboxIdentifier, sandboxOptions, loadedCallback, er
 			}
 		}
 
-		return _orig_bundle(uid, callback);
-	}
+		return _orig_bundle_handler(uid, callback);
+	});
 
 	return require.sandbox(sandboxIdentifier, sandboxOptions, loadedCallback, errorCallback);
 }
 
 }
 , {"filename":"sandbox.js"});
-// @pinf-bundle-module: {"file":"../node_modules/sjcl/sjcl.js","mtime":1407307318,"wrapper":"commonjs/leaky","format":"leaky","id":"74aebe51583a1aa6e83b78461af89adfd8bb7cda-sjcl/sjcl.js"}
+// @pinf-bundle-module: {"file":"../node_modules/sjcl/sjcl.js","mtime":1407996438,"wrapper":"commonjs/leaky","format":"leaky","id":"74aebe51583a1aa6e83b78461af89adfd8bb7cda-sjcl/sjcl.js"}
 require.memoize("74aebe51583a1aa6e83b78461af89adfd8bb7cda-sjcl/sjcl.js", 
 function(require, exports, module) {var __dirname = '../node_modules/sjcl';
 /** @fileOverview Javascript cryptography implementation.
@@ -3514,9 +3516,9 @@ return {
 };
 }
 , {"filename":"../node_modules/sjcl/sjcl.js"});
-// @pinf-bundle-module: {"file":"/playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/index.js","mtime":1383545607,"wrapper":"commonjs","format":"commonjs","id":"/__SYSTEM__/crypto.js"}
+// @pinf-bundle-module: {"file":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/index.js","mtime":1383545607,"wrapper":"commonjs","format":"commonjs","id":"/__SYSTEM__/crypto.js"}
 require.memoize("/__SYSTEM__/crypto.js", 
-function(require, exports, module) {var __dirname = 'playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify';
+function(require, exports, module) {var __dirname = 'playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify';
 var Buffer = require('__SYSTEM__/buffer').Buffer
 var sha = require('./sha')
 var sha256 = require('./sha256')
@@ -3616,10 +3618,10 @@ each(['createCredentials'
 })
 
 }
-, {"filename":"/playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/index.js"});
-// @pinf-bundle-module: {"file":"/playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/buffer-browserify/index.js","mtime":1377529372,"wrapper":"commonjs","format":"commonjs","id":"/__SYSTEM__/buffer.js"}
+, {"filename":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/index.js"});
+// @pinf-bundle-module: {"file":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/buffer-browserify/index.js","mtime":1377529372,"wrapper":"commonjs","format":"commonjs","id":"/__SYSTEM__/buffer.js"}
 require.memoize("/__SYSTEM__/buffer.js", 
-function(require, exports, module) {var __dirname = 'playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/buffer-browserify';
+function(require, exports, module) {var __dirname = 'playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/buffer-browserify';
 var assert;
 exports.Buffer = Buffer;
 exports.SlowBuffer = Buffer;
@@ -4746,10 +4748,10 @@ Buffer.prototype.writeDoubleBE = function(value, offset, noAssert) {
 };
 
 }
-, {"filename":"/playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/buffer-browserify/index.js"});
-// @pinf-bundle-module: {"file":"/playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/builtin/assert.js","mtime":1379366460,"wrapper":"commonjs/leaky","format":"leaky","id":"/__SYSTEM__/assert.js"}
+, {"filename":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/buffer-browserify/index.js"});
+// @pinf-bundle-module: {"file":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/builtin/assert.js","mtime":1379366460,"wrapper":"commonjs/leaky","format":"leaky","id":"/__SYSTEM__/assert.js"}
 require.memoize("/__SYSTEM__/assert.js", 
-function(require, exports, module) {var __dirname = 'playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/builtin';
+function(require, exports, module) {var __dirname = 'playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/builtin';
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -5091,10 +5093,10 @@ return {
     _throws: (typeof _throws !== "undefined") ? _throws : null
 };
 }
-, {"filename":"/playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/builtin/assert.js"});
-// @pinf-bundle-module: {"file":"/playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/builtin/util.js","mtime":1381856208,"wrapper":"commonjs","format":"commonjs","id":"/__SYSTEM__/util.js"}
+, {"filename":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/builtin/assert.js"});
+// @pinf-bundle-module: {"file":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/builtin/util.js","mtime":1381856208,"wrapper":"commonjs","format":"commonjs","id":"/__SYSTEM__/util.js"}
 require.memoize("/__SYSTEM__/util.js", 
-function(require, exports, module) {var __dirname = 'playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/builtin';
+function(require, exports, module) {var __dirname = 'playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/builtin';
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -5640,10 +5642,10 @@ function hasOwnProperty(obj, prop) {
 }
 
 }
-, {"filename":"/playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/builtin/util.js"});
-// @pinf-bundle-module: {"file":"/playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/builtin/_shims.js","mtime":1379366460,"wrapper":"commonjs","format":"commonjs","id":"/__SYSTEM__/_shims.js"}
+, {"filename":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/builtin/util.js"});
+// @pinf-bundle-module: {"file":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/builtin/_shims.js","mtime":1379366460,"wrapper":"commonjs","format":"commonjs","id":"/__SYSTEM__/_shims.js"}
 require.memoize("/__SYSTEM__/_shims.js", 
-function(require, exports, module) {var __dirname = 'playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/builtin';
+function(require, exports, module) {var __dirname = 'playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/builtin';
 
 
 //
@@ -5862,10 +5864,10 @@ if (typeof Object.getOwnPropertyDescriptor === 'function') {
 }
 
 }
-, {"filename":"/playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/builtin/_shims.js"});
-// @pinf-bundle-module: {"file":"/playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/buffer-browserify/buffer_ieee754.js","mtime":1342393862,"wrapper":"commonjs","format":"commonjs","id":"/__SYSTEM__/buffer_ieee754.js"}
+, {"filename":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/builtin/_shims.js"});
+// @pinf-bundle-module: {"file":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/buffer-browserify/buffer_ieee754.js","mtime":1342393862,"wrapper":"commonjs","format":"commonjs","id":"/__SYSTEM__/buffer_ieee754.js"}
 require.memoize("/__SYSTEM__/buffer_ieee754.js", 
-function(require, exports, module) {var __dirname = 'playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/buffer-browserify';
+function(require, exports, module) {var __dirname = 'playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/buffer-browserify';
 exports.readIEEE754 = function(buffer, offset, isBE, mLen, nBytes) {
   var e, m,
       eLen = nBytes * 8 - mLen - 1,
@@ -5952,10 +5954,10 @@ exports.writeIEEE754 = function(buffer, value, offset, isBE, mLen, nBytes) {
 };
 
 }
-, {"filename":"/playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/buffer-browserify/buffer_ieee754.js"});
-// @pinf-bundle-module: {"file":"/playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/sha.js","mtime":1384879954,"wrapper":"commonjs/leaky","format":"leaky","id":"/__SYSTEM__/sha.js"}
+, {"filename":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/buffer-browserify/buffer_ieee754.js"});
+// @pinf-bundle-module: {"file":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/sha.js","mtime":1384879954,"wrapper":"commonjs/leaky","format":"leaky","id":"/__SYSTEM__/sha.js"}
 require.memoize("/__SYSTEM__/sha.js", 
-function(require, exports, module) {var __dirname = 'playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify';
+function(require, exports, module) {var __dirname = 'playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify';
 /*
  * A JavaScript implementation of the Secure Hash Algorithm, SHA-1, as defined
  * in FIPS PUB 180-1
@@ -6071,10 +6073,10 @@ return {
     module: (typeof module !== "undefined") ? module : null
 };
 }
-, {"filename":"/playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/sha.js"});
-// @pinf-bundle-module: {"file":"/playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/helpers.js","mtime":1383545597,"wrapper":"commonjs/leaky","format":"leaky","id":"/__SYSTEM__/helpers.js"}
+, {"filename":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/sha.js"});
+// @pinf-bundle-module: {"file":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/helpers.js","mtime":1383545597,"wrapper":"commonjs/leaky","format":"leaky","id":"/__SYSTEM__/helpers.js"}
 require.memoize("/__SYSTEM__/helpers.js", 
-function(require, exports, module) {var __dirname = 'playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify';
+function(require, exports, module) {var __dirname = 'playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify';
 var Buffer = require('__SYSTEM__/buffer').Buffer;
 var intSize = 4;
 var zeroBuffer = new Buffer(intSize); zeroBuffer.fill(0);
@@ -6124,10 +6126,10 @@ return {
     module: (typeof module !== "undefined") ? module : null
 };
 }
-, {"filename":"/playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/helpers.js"});
-// @pinf-bundle-module: {"file":"/playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/sha256.js","mtime":1383545597,"wrapper":"commonjs/leaky","format":"leaky","id":"/__SYSTEM__/sha256.js"}
+, {"filename":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/helpers.js"});
+// @pinf-bundle-module: {"file":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/sha256.js","mtime":1383545597,"wrapper":"commonjs/leaky","format":"leaky","id":"/__SYSTEM__/sha256.js"}
 require.memoize("/__SYSTEM__/sha256.js", 
-function(require, exports, module) {var __dirname = 'playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify';
+function(require, exports, module) {var __dirname = 'playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify';
 
 /**
  * A JavaScript implementation of the Secure Hash Algorithm, SHA-256, as defined
@@ -6224,10 +6226,10 @@ return {
     module: (typeof module !== "undefined") ? module : null
 };
 }
-, {"filename":"/playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/sha256.js"});
-// @pinf-bundle-module: {"file":"/playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/rng.js","mtime":1385529373,"wrapper":"commonjs/leaky","format":"leaky","id":"/__SYSTEM__/rng.js"}
+, {"filename":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/sha256.js"});
+// @pinf-bundle-module: {"file":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/rng.js","mtime":1385529373,"wrapper":"commonjs/leaky","format":"leaky","id":"/__SYSTEM__/rng.js"}
 require.memoize("/__SYSTEM__/rng.js", 
-function(require, exports, module) {var __dirname = 'playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify';
+function(require, exports, module) {var __dirname = 'playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify';
 // Original code adapted from Robert Kieffer.
 // details at https://github.com/broofa/node-uuid
 (function() {
@@ -6266,10 +6268,10 @@ return {
     module: (typeof module !== "undefined") ? module : null
 };
 }
-, {"filename":"/playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/rng.js"});
-// @pinf-bundle-module: {"file":"/playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/md5.js","mtime":1383545597,"wrapper":"commonjs/leaky","format":"leaky","id":"/__SYSTEM__/md5.js"}
+, {"filename":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/rng.js"});
+// @pinf-bundle-module: {"file":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/md5.js","mtime":1383545597,"wrapper":"commonjs/leaky","format":"leaky","id":"/__SYSTEM__/md5.js"}
 require.memoize("/__SYSTEM__/md5.js", 
-function(require, exports, module) {var __dirname = 'playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify';
+function(require, exports, module) {var __dirname = 'playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify';
 /*
  * A JavaScript implementation of the RSA Data Security, Inc. MD5 Message
  * Digest Algorithm, as defined in RFC 1321.
@@ -6451,8 +6453,8 @@ return {
     module: (typeof module !== "undefined") ? module : null
 };
 }
-, {"filename":"/playground/2014-08-pinf-loader-secure/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/md5.js"});
-// @pinf-bundle-module: {"file":"ecc.js","mtime":1407199298,"wrapper":"commonjs/leaky","format":"leaky","id":"/ecc.js"}
+, {"filename":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/md5.js"});
+// @pinf-bundle-module: {"file":"ecc.js","mtime":1407311739,"wrapper":"commonjs/leaky","format":"leaky","id":"/ecc.js"}
 require.memoize("/ecc.js", 
 function(require, exports, module) {var __dirname = '';
 

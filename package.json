@@ -10,10 +10,15 @@
   "devDependencies": {
     "compression": "^1.0.9",
     "express": "^4.7.2",
-    "pinf-for-nodejs": "git://github.com/pinf/pinf-for-nodejs.git#3c0946265dee0876d0d7ed2a221db18419f789ae"
+    "pinf-for-nodejs": "0.1.x"
   },
   "scripts": {
     "install": "cd node_modules/sjcl; ./configure --with-ecc --compress=none; make",
     "build": "cd client; ../node_modules/.bin/pinf bundle"
+  },
+  "config": {
+    "pio.deploy.converter": {
+      "name": "nodejs-lib"
+    }
   }
 }

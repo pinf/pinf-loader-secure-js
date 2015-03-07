@@ -1,11 +1,90 @@
 // @pinf-bundle-ignore: 
 PINF.bundle("", function(require) {
-// @pinf-bundle-module: {"file":"sandbox.js","mtime":1407997188,"wrapper":"commonjs","format":"commonjs","id":"/sandbox.js"}
+// @pinf-bundle-header: {"helper":"amd-ish"}
+function wrapAMD(callback) {
+    var amdRequireImplementation = null;
+    function define(id, dependencies, moduleInitializer) {
+        if (typeof dependencies === "undefined" && typeof moduleInitializer === "undefined") {
+            if (typeof id === "function") {
+                moduleInitializer = id;
+            } else {
+                var exports = id;
+                moduleInitializer = function() { return exports; }
+            }
+            dependencies = ["require", "exports", "module"];
+            id = null;
+        } else
+        if (Array.isArray(id) && typeof dependencies === "function" && typeof moduleInitializer === "undefined") {
+            moduleInitializer = dependencies;
+            dependencies = id;
+            id = null;
+        } else
+        if (typeof id === "string" && typeof dependencies === "function" && typeof moduleInitializer === "undefined") {
+            moduleInitializer = dependencies;
+            dependencies = ["require", "exports", "module"];
+        }
+        return function(realRequire, exports, module) {
+            function require(id) {
+                if (Array.isArray(id)) {
+                    var apis = [];
+                    var callback = arguments[1];
+                    id.forEach(function(moduleId, index) {
+                        realRequire.async(moduleId, function(api) {
+                            apis[index] = api
+                            if (apis.length === id.length) {
+                                if (callback) callback.apply(null, apis);
+                            }
+                        }, function(err) {
+                            throw err;
+                        });
+                    });
+                } else {
+                    return realRequire(id);
+                }
+            }
+            require.toUrl = function(id) {
+                return realRequire.sandbox.id.replace(/\/[^\/]*$/, "") + realRequire.id(id);
+            }
+            require.sandbox = realRequire.sandbox;
+            require.id = realRequire.id;
+            if (typeof amdRequireImplementation !== "undefined") {
+                amdRequireImplementation = require;
+            }
+            if (typeof moduleInitializer === "function") {
+                return moduleInitializer.apply(moduleInitializer, dependencies.map(function(name) {
+                    if (name === "require") return require;
+                    if (name === "exports") return exports;
+                    if (name === "module") return module;
+                    return require(name);
+                }));
+            } else
+            if (typeof dependencies === "object") {
+                return dependencies;
+            }
+        }
+    }
+    define.amd = { jQuery: true };
+    require.def = define;
+    var exports = null;
+    function wrappedDefine() {
+        exports = define.apply(null, arguments);
+    }
+    wrappedDefine.amd = { jQuery: true };
+    function amdRequire() {
+        return amdRequireImplementation.apply(null, arguments);
+    }
+    amdRequire.def = wrappedDefine
+    callback(amdRequire, wrappedDefine);
+    return exports;
+}
+// @pinf-bundle-module: {"file":"sandbox.js","mtime":1423123918,"wrapper":"commonjs","format":"commonjs","id":"/sandbox.js"}
 require.memoize("/sandbox.js", 
 function(require, exports, module) {var __dirname = '';
 
 const SJCL = require("sjcl");
 const ECC = require("./ecc");
+const STORE = require("store");
+const SHA1 = require("./sha1");
 
 
 exports.main = function() {
@@ -57,6 +136,15 @@ exports.sandbox = function(sandboxIdentifier, sandboxOptions, loadedCallback, er
 			throw new Error("No meta data supplied for bundle '" + uid + "'!");
 		}
 
+		// TODO: To make this secure we have to generate a key in our singleton and sign
+		//       the value in the store with it. That way when verifying we can detect if the
+		//       user verified it.
+		var cacheKey = "pinf-loader-secure-js." + SJCL.codec.hex.fromBits(SJCL.hash.sha256.hash(JSON.stringify(meta)));
+
+		if (STORE.get(cacheKey) === true) {
+			return _orig_bundle_handler(uid, callback);
+		}
+
 		var verified = false;
 
 		// NOTE: For the following verification implementation to work,
@@ -94,18 +182,27 @@ exports.sandbox = function(sandboxIdentifier, sandboxOptions, loadedCallback, er
 			}
 
 			var hashParts = meta.hash.split(":");
+
 			if (typeof SJCL.hash[hashParts[0]] === "undefined") {
 				throw new Error("Hash type '" + hashParts[0] + "' used by bundle '" + uid + "' not supported!");
 			}
+
+			// TODO: Why does this hash not match the sha1 hash from NodeJS?
+			console.log("HASH 1", (new SHA1(callback.toString(), "TEXT")).getHash("SHA-1", "HEX"));
+
+/*
 			if (hashParts[1] !== SJCL.codec.hex.fromBits(SJCL.hash[hashParts[0]].hash(callback.toString()))) {
 				throw new Error("Bundle hash supplied for bundle '" + uid + "' does not match calculated hash from toString() of bundle payload!");
 			}
+*/
 			if (sandboxOptions.secure.bundles.indexOf(meta.hash) === -1) {
 				if (sandboxOptions.secure.bundles.indexOf(hashParts[0] + ":*") === -1) {
 					throw new Error("Hash '" + meta.hash + "' used by bundle '" + uid + "' not declared in 'secure.bundles'!");
 				}
 			}
 		}
+
+		STORE.set(cacheKey, true);
 
 		return _orig_bundle_handler(uid, callback);
 	});
@@ -115,7 +212,7 @@ exports.sandbox = function(sandboxIdentifier, sandboxOptions, loadedCallback, er
 
 }
 , {"filename":"sandbox.js"});
-// @pinf-bundle-module: {"file":"../node_modules/sjcl/sjcl.js","mtime":1407996438,"wrapper":"commonjs/leaky","format":"leaky","id":"74aebe51583a1aa6e83b78461af89adfd8bb7cda-sjcl/sjcl.js"}
+// @pinf-bundle-module: {"file":"../node_modules/sjcl/sjcl.js","mtime":1425588300,"wrapper":"commonjs/leaky","format":"leaky","id":"74aebe51583a1aa6e83b78461af89adfd8bb7cda-sjcl/sjcl.js"}
 require.memoize("74aebe51583a1aa6e83b78461af89adfd8bb7cda-sjcl/sjcl.js", 
 function(require, exports, module) {var __dirname = '../node_modules/sjcl';
 /** @fileOverview Javascript cryptography implementation.
@@ -3516,9 +3613,9 @@ return {
 };
 }
 , {"filename":"../node_modules/sjcl/sjcl.js"});
-// @pinf-bundle-module: {"file":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/index.js","mtime":1383545607,"wrapper":"commonjs","format":"commonjs","id":"/__SYSTEM__/crypto.js"}
+// @pinf-bundle-module: {"file":"/genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/index.js","mtime":1383545607,"wrapper":"commonjs","format":"commonjs","id":"/__SYSTEM__/crypto.js"}
 require.memoize("/__SYSTEM__/crypto.js", 
-function(require, exports, module) {var __dirname = 'playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify';
+function(require, exports, module) {var __dirname = 'genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify';
 var Buffer = require('__SYSTEM__/buffer').Buffer
 var sha = require('./sha')
 var sha256 = require('./sha256')
@@ -3618,10 +3715,10 @@ each(['createCredentials'
 })
 
 }
-, {"filename":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/index.js"});
-// @pinf-bundle-module: {"file":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/buffer-browserify/index.js","mtime":1377529372,"wrapper":"commonjs","format":"commonjs","id":"/__SYSTEM__/buffer.js"}
+, {"filename":"/genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/index.js"});
+// @pinf-bundle-module: {"file":"/genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/node_modules/buffer-browserify/index.js","mtime":1418900069,"wrapper":"commonjs","format":"commonjs","id":"/__SYSTEM__/buffer.js"}
 require.memoize("/__SYSTEM__/buffer.js", 
-function(require, exports, module) {var __dirname = 'playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/buffer-browserify';
+function(require, exports, module) {var __dirname = 'genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/node_modules/buffer-browserify';
 var assert;
 exports.Buffer = Buffer;
 exports.SlowBuffer = Buffer;
@@ -3677,8 +3774,8 @@ function Buffer(subject, encoding, offset) {
         break;
 
       default:
-        throw new Error('First argument needs to be a number, ' +
-                        'array or string.');
+        throw new TypeError('First argument needs to be a number, ' +
+                            'array or string.');
     }
 
     // Treat array-ish objects as a byte array.
@@ -3688,7 +3785,10 @@ function Buffer(subject, encoding, offset) {
           this[i] = subject.readUInt8(i);
         }
         else {
-          this[i] = subject[i];
+          // Round-up subject[i] to a UInt8.
+          // e.g.: ((-432 % 256) + 256) % 256 = (-176 + 256) % 256
+          //                                  = 80
+          this[i] = ((subject[i] % 256) + 256) % 256;
         }
       }
     } else if (type == 'string') {
@@ -3869,9 +3969,9 @@ Buffer.prototype.hexWrite = function(string, offset, length) {
     length = strLen / 2;
   }
   for (var i = 0; i < length; i++) {
-    var byte = parseInt(string.substr(i * 2, 2), 16);
-    if (isNaN(byte)) throw new Error('Invalid hex string');
-    this[offset + i] = byte;
+    var b = parseInt(string.substr(i * 2, 2), 16);
+    if (isNaN(b)) throw new Error('Invalid hex string');
+    this[offset + i] = b;
   }
   Buffer._charsWritten = i * 2;
   return i;
@@ -4030,7 +4130,7 @@ Buffer.prototype.fill = function fill(value, start, end) {
 
 // Static methods
 Buffer.isBuffer = function isBuffer(b) {
-  return b instanceof Buffer || b instanceof Buffer;
+  return b instanceof Buffer;
 };
 
 Buffer.concat = function (list, totalLength) {
@@ -4748,10 +4848,10 @@ Buffer.prototype.writeDoubleBE = function(value, offset, noAssert) {
 };
 
 }
-, {"filename":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/buffer-browserify/index.js"});
-// @pinf-bundle-module: {"file":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/builtin/assert.js","mtime":1379366460,"wrapper":"commonjs/leaky","format":"leaky","id":"/__SYSTEM__/assert.js"}
+, {"filename":"/genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/node_modules/buffer-browserify/index.js"});
+// @pinf-bundle-module: {"file":"/genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/builtin/assert.js","mtime":1379366460,"wrapper":"commonjs/leaky","format":"leaky","id":"/__SYSTEM__/assert.js"}
 require.memoize("/__SYSTEM__/assert.js", 
-function(require, exports, module) {var __dirname = 'playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/builtin';
+function(require, exports, module) {var __dirname = 'genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/builtin';
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -5093,10 +5193,10 @@ return {
     _throws: (typeof _throws !== "undefined") ? _throws : null
 };
 }
-, {"filename":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/builtin/assert.js"});
-// @pinf-bundle-module: {"file":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/builtin/util.js","mtime":1381856208,"wrapper":"commonjs","format":"commonjs","id":"/__SYSTEM__/util.js"}
+, {"filename":"/genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/builtin/assert.js"});
+// @pinf-bundle-module: {"file":"/genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/builtin/util.js","mtime":1381856208,"wrapper":"commonjs","format":"commonjs","id":"/__SYSTEM__/util.js"}
 require.memoize("/__SYSTEM__/util.js", 
-function(require, exports, module) {var __dirname = 'playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/builtin';
+function(require, exports, module) {var __dirname = 'genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/builtin';
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -5642,10 +5742,10 @@ function hasOwnProperty(obj, prop) {
 }
 
 }
-, {"filename":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/builtin/util.js"});
-// @pinf-bundle-module: {"file":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/builtin/_shims.js","mtime":1379366460,"wrapper":"commonjs","format":"commonjs","id":"/__SYSTEM__/_shims.js"}
+, {"filename":"/genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/builtin/util.js"});
+// @pinf-bundle-module: {"file":"/genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/builtin/_shims.js","mtime":1379366460,"wrapper":"commonjs","format":"commonjs","id":"/__SYSTEM__/_shims.js"}
 require.memoize("/__SYSTEM__/_shims.js", 
-function(require, exports, module) {var __dirname = 'playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/builtin';
+function(require, exports, module) {var __dirname = 'genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/builtin';
 
 
 //
@@ -5864,10 +5964,10 @@ if (typeof Object.getOwnPropertyDescriptor === 'function') {
 }
 
 }
-, {"filename":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/builtin/_shims.js"});
-// @pinf-bundle-module: {"file":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/buffer-browserify/buffer_ieee754.js","mtime":1342393862,"wrapper":"commonjs","format":"commonjs","id":"/__SYSTEM__/buffer_ieee754.js"}
+, {"filename":"/genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/builtin/_shims.js"});
+// @pinf-bundle-module: {"file":"/genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/node_modules/buffer-browserify/buffer_ieee754.js","mtime":1418900069,"wrapper":"commonjs","format":"commonjs","id":"/__SYSTEM__/buffer_ieee754.js"}
 require.memoize("/__SYSTEM__/buffer_ieee754.js", 
-function(require, exports, module) {var __dirname = 'playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/buffer-browserify';
+function(require, exports, module) {var __dirname = 'genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/node_modules/buffer-browserify';
 exports.readIEEE754 = function(buffer, offset, isBE, mLen, nBytes) {
   var e, m,
       eLen = nBytes * 8 - mLen - 1,
@@ -5954,10 +6054,10 @@ exports.writeIEEE754 = function(buffer, value, offset, isBE, mLen, nBytes) {
 };
 
 }
-, {"filename":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/buffer-browserify/buffer_ieee754.js"});
-// @pinf-bundle-module: {"file":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/sha.js","mtime":1384879954,"wrapper":"commonjs/leaky","format":"leaky","id":"/__SYSTEM__/sha.js"}
+, {"filename":"/genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/node_modules/buffer-browserify/buffer_ieee754.js"});
+// @pinf-bundle-module: {"file":"/genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/sha.js","mtime":1384879954,"wrapper":"commonjs/leaky","format":"leaky","id":"/__SYSTEM__/sha.js"}
 require.memoize("/__SYSTEM__/sha.js", 
-function(require, exports, module) {var __dirname = 'playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify';
+function(require, exports, module) {var __dirname = 'genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify';
 /*
  * A JavaScript implementation of the Secure Hash Algorithm, SHA-1, as defined
  * in FIPS PUB 180-1
@@ -6073,10 +6173,10 @@ return {
     module: (typeof module !== "undefined") ? module : null
 };
 }
-, {"filename":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/sha.js"});
-// @pinf-bundle-module: {"file":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/helpers.js","mtime":1383545597,"wrapper":"commonjs/leaky","format":"leaky","id":"/__SYSTEM__/helpers.js"}
+, {"filename":"/genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/sha.js"});
+// @pinf-bundle-module: {"file":"/genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/helpers.js","mtime":1383545597,"wrapper":"commonjs/leaky","format":"leaky","id":"/__SYSTEM__/helpers.js"}
 require.memoize("/__SYSTEM__/helpers.js", 
-function(require, exports, module) {var __dirname = 'playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify';
+function(require, exports, module) {var __dirname = 'genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify';
 var Buffer = require('__SYSTEM__/buffer').Buffer;
 var intSize = 4;
 var zeroBuffer = new Buffer(intSize); zeroBuffer.fill(0);
@@ -6126,10 +6226,10 @@ return {
     module: (typeof module !== "undefined") ? module : null
 };
 }
-, {"filename":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/helpers.js"});
-// @pinf-bundle-module: {"file":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/sha256.js","mtime":1383545597,"wrapper":"commonjs/leaky","format":"leaky","id":"/__SYSTEM__/sha256.js"}
+, {"filename":"/genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/helpers.js"});
+// @pinf-bundle-module: {"file":"/genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/sha256.js","mtime":1383545597,"wrapper":"commonjs/leaky","format":"leaky","id":"/__SYSTEM__/sha256.js"}
 require.memoize("/__SYSTEM__/sha256.js", 
-function(require, exports, module) {var __dirname = 'playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify';
+function(require, exports, module) {var __dirname = 'genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify';
 
 /**
  * A JavaScript implementation of the Secure Hash Algorithm, SHA-256, as defined
@@ -6226,10 +6326,10 @@ return {
     module: (typeof module !== "undefined") ? module : null
 };
 }
-, {"filename":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/sha256.js"});
-// @pinf-bundle-module: {"file":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/rng.js","mtime":1385529373,"wrapper":"commonjs/leaky","format":"leaky","id":"/__SYSTEM__/rng.js"}
+, {"filename":"/genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/sha256.js"});
+// @pinf-bundle-module: {"file":"/genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/rng.js","mtime":1385529373,"wrapper":"commonjs/leaky","format":"leaky","id":"/__SYSTEM__/rng.js"}
 require.memoize("/__SYSTEM__/rng.js", 
-function(require, exports, module) {var __dirname = 'playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify';
+function(require, exports, module) {var __dirname = 'genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify';
 // Original code adapted from Robert Kieffer.
 // details at https://github.com/broofa/node-uuid
 (function() {
@@ -6268,10 +6368,10 @@ return {
     module: (typeof module !== "undefined") ? module : null
 };
 }
-, {"filename":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/rng.js"});
-// @pinf-bundle-module: {"file":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/md5.js","mtime":1383545597,"wrapper":"commonjs/leaky","format":"leaky","id":"/__SYSTEM__/md5.js"}
+, {"filename":"/genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/rng.js"});
+// @pinf-bundle-module: {"file":"/genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/md5.js","mtime":1383545597,"wrapper":"commonjs/leaky","format":"leaky","id":"/__SYSTEM__/md5.js"}
 require.memoize("/__SYSTEM__/md5.js", 
-function(require, exports, module) {var __dirname = 'playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify';
+function(require, exports, module) {var __dirname = 'genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify';
 /*
  * A JavaScript implementation of the RSA Data Security, Inc. MD5 Message
  * Digest Algorithm, as defined in RFC 1321.
@@ -6453,8 +6553,8 @@ return {
     module: (typeof module !== "undefined") ? module : null
 };
 }
-, {"filename":"/playground/2014-07-pinf-for-mozilla-addon-sdk/pinf-for-mozilla-addon-sdk/node_modules/pinf-loader-secure-js/node_modules/pinf-for-nodejs/node_modules/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/md5.js"});
-// @pinf-bundle-module: {"file":"ecc.js","mtime":1407311739,"wrapper":"commonjs/leaky","format":"leaky","id":"/ecc.js"}
+, {"filename":"/genesis/os.inception/services/2-it.pinf/pinf-it-bundler/node_modules/browser-builtins/node_modules/crypto-browserify/md5.js"});
+// @pinf-bundle-module: {"file":"ecc.js","mtime":1423006723,"wrapper":"commonjs/leaky","format":"leaky","id":"/ecc.js"}
 require.memoize("/ecc.js", 
 function(require, exports, module) {var __dirname = '';
 
@@ -6637,7 +6737,8 @@ require.memoize("/package.json",
 {
     "main": "/sandbox.js",
     "mappings": {
-        "sjcl": "74aebe51583a1aa6e83b78461af89adfd8bb7cda-sjcl"
+        "sjcl": "74aebe51583a1aa6e83b78461af89adfd8bb7cda-sjcl",
+        "store": "fead16835712bc873dda7a42db9dd87bb2d59825-store"
     },
     "dirpath": "."
 }
@@ -6649,6 +6750,224 @@ require.memoize("74aebe51583a1aa6e83b78461af89adfd8bb7cda-sjcl/package.json",
     "dirpath": "../node_modules/sjcl"
 }
 , {"filename":"../node_modules/sjcl/package.json"});
+// @pinf-bundle-module: {"file":"../node_modules/store/store.js","mtime":1416793335,"wrapper":"amd-ish","format":"amd-ish","id":"fead16835712bc873dda7a42db9dd87bb2d59825-store/store.js"}
+require.memoize("fead16835712bc873dda7a42db9dd87bb2d59825-store/store.js", 
+wrapAMD(function(require, define) {
+;(function(win){
+	var store = {},
+		doc = win.document,
+		localStorageName = 'localStorage',
+		scriptTag = 'script',
+		storage
+
+	store.disabled = false
+	store.version = '1.3.17'
+	store.set = function(key, value) {}
+	store.get = function(key, defaultVal) {}
+	store.has = function(key) { return store.get(key) !== undefined }
+	store.remove = function(key) {}
+	store.clear = function() {}
+	store.transact = function(key, defaultVal, transactionFn) {
+		if (transactionFn == null) {
+			transactionFn = defaultVal
+			defaultVal = null
+		}
+		if (defaultVal == null) {
+			defaultVal = {}
+		}
+		var val = store.get(key, defaultVal)
+		transactionFn(val)
+		store.set(key, val)
+	}
+	store.getAll = function() {}
+	store.forEach = function() {}
+
+	store.serialize = function(value) {
+		return JSON.stringify(value)
+	}
+	store.deserialize = function(value) {
+		if (typeof value != 'string') { return undefined }
+		try { return JSON.parse(value) }
+		catch(e) { return value || undefined }
+	}
+
+	// Functions to encapsulate questionable FireFox 3.6.13 behavior
+	// when about.config::dom.storage.enabled === false
+	// See https://github.com/marcuswestin/store.js/issues#issue/13
+	function isLocalStorageNameSupported() {
+		try { return (localStorageName in win && win[localStorageName]) }
+		catch(err) { return false }
+	}
+
+	if (isLocalStorageNameSupported()) {
+		storage = win[localStorageName]
+		store.set = function(key, val) {
+			if (val === undefined) { return store.remove(key) }
+			storage.setItem(key, store.serialize(val))
+			return val
+		}
+		store.get = function(key, defaultVal) {
+			var val = store.deserialize(storage.getItem(key))
+			return (val === undefined ? defaultVal : val)
+		}
+		store.remove = function(key) { storage.removeItem(key) }
+		store.clear = function() { storage.clear() }
+		store.getAll = function() {
+			var ret = {}
+			store.forEach(function(key, val) {
+				ret[key] = val
+			})
+			return ret
+		}
+		store.forEach = function(callback) {
+			for (var i=0; i<storage.length; i++) {
+				var key = storage.key(i)
+				callback(key, store.get(key))
+			}
+		}
+	} else if (doc.documentElement.addBehavior) {
+		var storageOwner,
+			storageContainer
+		// Since #userData storage applies only to specific paths, we need to
+		// somehow link our data to a specific path.  We choose /favicon.ico
+		// as a pretty safe option, since all browsers already make a request to
+		// this URL anyway and being a 404 will not hurt us here.  We wrap an
+		// iframe pointing to the favicon in an ActiveXObject(htmlfile) object
+		// (see: http://msdn.microsoft.com/en-us/library/aa752574(v=VS.85).aspx)
+		// since the iframe access rules appear to allow direct access and
+		// manipulation of the document element, even for a 404 page.  This
+		// document can be used instead of the current document (which would
+		// have been limited to the current path) to perform #userData storage.
+		try {
+			storageContainer = new ActiveXObject('htmlfile')
+			storageContainer.open()
+			storageContainer.write('<'+scriptTag+'>document.w=window</'+scriptTag+'><iframe src="/favicon.ico"></iframe>')
+			storageContainer.close()
+			storageOwner = storageContainer.w.frames[0].document
+			storage = storageOwner.createElement('div')
+		} catch(e) {
+			// somehow ActiveXObject instantiation failed (perhaps some special
+			// security settings or otherwse), fall back to per-path storage
+			storage = doc.createElement('div')
+			storageOwner = doc.body
+		}
+		var withIEStorage = function(storeFunction) {
+			return function() {
+				var args = Array.prototype.slice.call(arguments, 0)
+				args.unshift(storage)
+				// See http://msdn.microsoft.com/en-us/library/ms531081(v=VS.85).aspx
+				// and http://msdn.microsoft.com/en-us/library/ms531424(v=VS.85).aspx
+				storageOwner.appendChild(storage)
+				storage.addBehavior('#default#userData')
+				storage.load(localStorageName)
+				var result = storeFunction.apply(store, args)
+				storageOwner.removeChild(storage)
+				return result
+			}
+		}
+
+		// In IE7, keys cannot start with a digit or contain certain chars.
+		// See https://github.com/marcuswestin/store.js/issues/40
+		// See https://github.com/marcuswestin/store.js/issues/83
+		var forbiddenCharsRegex = new RegExp("[!\"#$%&'()*+,/\\\\:;<=>?@[\\]^`{|}~]", "g")
+		function ieKeyFix(key) {
+			return key.replace(/^d/, '___$&').replace(forbiddenCharsRegex, '___')
+		}
+		store.set = withIEStorage(function(storage, key, val) {
+			key = ieKeyFix(key)
+			if (val === undefined) { return store.remove(key) }
+			storage.setAttribute(key, store.serialize(val))
+			storage.save(localStorageName)
+			return val
+		})
+		store.get = withIEStorage(function(storage, key, defaultVal) {
+			key = ieKeyFix(key)
+			var val = store.deserialize(storage.getAttribute(key))
+			return (val === undefined ? defaultVal : val)
+		})
+		store.remove = withIEStorage(function(storage, key) {
+			key = ieKeyFix(key)
+			storage.removeAttribute(key)
+			storage.save(localStorageName)
+		})
+		store.clear = withIEStorage(function(storage) {
+			var attributes = storage.XMLDocument.documentElement.attributes
+			storage.load(localStorageName)
+			for (var i=0, attr; attr=attributes[i]; i++) {
+				storage.removeAttribute(attr.name)
+			}
+			storage.save(localStorageName)
+		})
+		store.getAll = function(storage) {
+			var ret = {}
+			store.forEach(function(key, val) {
+				ret[key] = val
+			})
+			return ret
+		}
+		store.forEach = withIEStorage(function(storage, callback) {
+			var attributes = storage.XMLDocument.documentElement.attributes
+			for (var i=0, attr; attr=attributes[i]; ++i) {
+				callback(attr.name, store.deserialize(storage.getAttribute(attr.name)))
+			}
+		})
+	}
+
+	try {
+		var testKey = '__storejs__'
+		store.set(testKey, testKey)
+		if (store.get(testKey) != testKey) { store.disabled = true }
+		store.remove(testKey)
+	} catch(e) {
+		store.disabled = true
+	}
+	store.enabled = !store.disabled
+
+	if (typeof module != 'undefined' && module.exports && this.module !== module) { module.exports = store }
+	else if (typeof define === 'function' && define.amd) { define(store) }
+	else { win.store = store }
+
+})(Function('return this')());
+
+})
+, {"filename":"../node_modules/store/store.js"});
+// @pinf-bundle-module: {"file":"sha1.js","mtime":1423121217,"wrapper":"amd-ish","format":"amd-ish","id":"/sha1.js"}
+require.memoize("/sha1.js", 
+wrapAMD(function(require, define) {
+/*
+ A JavaScript implementation of the SHA family of hashes, as
+ defined in FIPS PUB 180-2 as well as the corresponding HMAC implementation
+ as defined in FIPS PUB 198a
+
+ Copyright Brian Turek 2008-2015
+ Distributed under the BSD License
+ See http://caligatio.github.com/jsSHA/ for more information
+
+ Several functions taken from Paul Johnston
+*/
+'use strict';(function(D){function n(b,c,f){var a=0,d=[0],g="",e=null,g=f||"UTF8";if("UTF8"!==g&&"UTF16BE"!==g&&"UTF16LE"!==g)throw"encoding must be UTF8, UTF16BE, or UTF16LE";if("HEX"===c){if(0!==b.length%2)throw"srcString of HEX type must be in byte increments";e=v(b);a=e.binLen;d=e.value}else if("TEXT"===c)e=w(b,g),a=e.binLen,d=e.value;else if("B64"===c)e=x(b),a=e.binLen,d=e.value;else if("BYTES"===c)e=y(b),a=e.binLen,d=e.value;else throw"inputFormat must be HEX, TEXT, B64, or BYTES";this.getHash=
+function(b,g,c,f){var e=null,h=d.slice(),m=a,p;3===arguments.length?"number"!==typeof c&&(f=c,c=1):2===arguments.length&&(c=1);if(c!==parseInt(c,10)||1>c)throw"numRounds must a integer >= 1";switch(g){case "HEX":e=z;break;case "B64":e=A;break;case "BYTES":e=B;break;default:throw"format must be HEX, B64, or BYTES";}if("SHA-1"===b)for(p=0;p<c;p+=1)h=t(h,m),m=160;else throw"Chosen SHA variant is not supported";return e(h,C(f))};this.getHMAC=function(c,b,e,f,r){var h,m,p,s,n=[],u=[];h=null;switch(f){case "HEX":f=
+z;break;case "B64":f=A;break;case "BYTES":f=B;break;default:throw"outputFormat must be HEX, B64, or BYTES";}if("SHA-1"===e)m=64,s=160;else throw"Chosen SHA variant is not supported";if("HEX"===b)h=v(c),p=h.binLen,h=h.value;else if("TEXT"===b)h=w(c,g),p=h.binLen,h=h.value;else if("B64"===b)h=x(c),p=h.binLen,h=h.value;else if("BYTES"===b)h=y(c),p=h.binLen,h=h.value;else throw"inputFormat must be HEX, TEXT, B64, or BYTES";c=8*m;b=m/4-1;if(m<p/8){if("SHA-1"===e)h=t(h,p);else throw"Unexpected error in HMAC implementation";
+for(;h.length<=b;)h.push(0);h[b]&=4294967040}else if(m>p/8){for(;h.length<=b;)h.push(0);h[b]&=4294967040}for(m=0;m<=b;m+=1)n[m]=h[m]^909522486,u[m]=h[m]^1549556828;if("SHA-1"===e)e=t(u.concat(t(n.concat(d),c+a)),c+s);else throw"Unexpected error in HMAC implementation";return f(e,C(r))}}function w(b,c){var f=[],a,d=[],g=0,e,k,q;if("UTF8"===c)for(e=0;e<b.length;e+=1)for(a=b.charCodeAt(e),d=[],128>a?d.push(a):2048>a?(d.push(192|a>>>6),d.push(128|a&63)):55296>a||57344<=a?d.push(224|a>>>12,128|a>>>6&63,
+128|a&63):(e+=1,a=65536+((a&1023)<<10|b.charCodeAt(e)&1023),d.push(240|a>>>18,128|a>>>12&63,128|a>>>6&63,128|a&63)),k=0;k<d.length;k+=1){for(q=g>>>2;f.length<=q;)f.push(0);f[q]|=d[k]<<24-g%4*8;g+=1}else if("UTF16BE"===c||"UTF16LE"===c)for(e=0;e<b.length;e+=1){a=b.charCodeAt(e);"UTF16LE"===c&&(k=a&255,a=k<<8|a>>8);for(q=g>>>2;f.length<=q;)f.push(0);f[q]|=a<<16-g%4*8;g+=2}return{value:f,binLen:8*g}}function v(b){var c=[],f=b.length,a,d,g;if(0!==f%2)throw"String of HEX type must be in byte increments";
+for(a=0;a<f;a+=2){d=parseInt(b.substr(a,2),16);if(isNaN(d))throw"String of HEX type contains invalid characters";for(g=a>>>3;c.length<=g;)c.push(0);c[a>>>3]|=d<<24-a%8*4}return{value:c,binLen:4*f}}function y(b){var c=[],f,a,d;for(a=0;a<b.length;a+=1)f=b.charCodeAt(a),d=a>>>2,c.length<=d&&c.push(0),c[d]|=f<<24-a%4*8;return{value:c,binLen:8*b.length}}function x(b){var c=[],f=0,a,d,g,e,k;if(-1===b.search(/^[a-zA-Z0-9=+\/]+$/))throw"Invalid character in base-64 string";d=b.indexOf("=");b=b.replace(/\=/g,
+"");if(-1!==d&&d<b.length)throw"Invalid '=' found in base-64 string";for(d=0;d<b.length;d+=4){k=b.substr(d,4);for(g=e=0;g<k.length;g+=1)a="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".indexOf(k[g]),e|=a<<18-6*g;for(g=0;g<k.length-1;g+=1){for(a=f>>>2;c.length<=a;)c.push(0);c[a]|=(e>>>16-8*g&255)<<24-f%4*8;f+=1}}return{value:c,binLen:8*f}}function z(b,c){var f="",a=4*b.length,d,g;for(d=0;d<a;d+=1)g=b[d>>>2]>>>8*(3-d%4),f+="0123456789abcdef".charAt(g>>>4&15)+"0123456789abcdef".charAt(g&
+15);return c.outputUpper?f.toUpperCase():f}function A(b,c){var f="",a=4*b.length,d,g,e;for(d=0;d<a;d+=3)for(e=d+1>>>2,g=b.length<=e?0:b[e],e=d+2>>>2,e=b.length<=e?0:b[e],e=(b[d>>>2]>>>8*(3-d%4)&255)<<16|(g>>>8*(3-(d+1)%4)&255)<<8|e>>>8*(3-(d+2)%4)&255,g=0;4>g;g+=1)f=8*d+6*g<=32*b.length?f+"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".charAt(e>>>6*(3-g)&63):f+c.b64Pad;return f}function B(b){var c="",f=4*b.length,a,d;for(a=0;a<f;a+=1)d=b[a>>>2]>>>8*(3-a%4)&255,c+=String.fromCharCode(d);
+return c}function C(b){var c={outputUpper:!1,b64Pad:"="};try{b.hasOwnProperty("outputUpper")&&(c.outputUpper=b.outputUpper),b.hasOwnProperty("b64Pad")&&(c.b64Pad=b.b64Pad)}catch(f){}if("boolean"!==typeof c.outputUpper)throw"Invalid outputUpper formatting option";if("string"!==typeof c.b64Pad)throw"Invalid b64Pad formatting option";return c}function r(b,c){return b<<c|b>>>32-c}function s(b,c){var f=(b&65535)+(c&65535);return((b>>>16)+(c>>>16)+(f>>>16)&65535)<<16|f&65535}function u(b,c,f,a,d){var g=
+(b&65535)+(c&65535)+(f&65535)+(a&65535)+(d&65535);return((b>>>16)+(c>>>16)+(f>>>16)+(a>>>16)+(d>>>16)+(g>>>16)&65535)<<16|g&65535}function t(b,c){var f=[],a,d,g,e,k,q,n,l,t,h=[1732584193,4023233417,2562383102,271733878,3285377520];for(a=(c+65>>>9<<4)+15;b.length<=a;)b.push(0);b[c>>>5]|=128<<24-c%32;b[a]=c;t=b.length;for(n=0;n<t;n+=16){a=h[0];d=h[1];g=h[2];e=h[3];k=h[4];for(l=0;80>l;l+=1)f[l]=16>l?b[l+n]:r(f[l-3]^f[l-8]^f[l-14]^f[l-16],1),q=20>l?u(r(a,5),d&g^~d&e,k,1518500249,f[l]):40>l?u(r(a,5),d^
+g^e,k,1859775393,f[l]):60>l?u(r(a,5),d&g^d&e^g&e,k,2400959708,f[l]):u(r(a,5),d^g^e,k,3395469782,f[l]),k=e,e=g,g=r(d,30),d=a,a=q;h[0]=s(a,h[0]);h[1]=s(d,h[1]);h[2]=s(g,h[2]);h[3]=s(e,h[3]);h[4]=s(k,h[4])}return h}"function"===typeof define&&define.amd?define(function(){return n}):"undefined"!==typeof exports?"undefined"!==typeof module&&module.exports?module.exports=exports=n:exports=n:D.jsSHA=n})(this);
+})
+, {"filename":"sha1.js"});
+// @pinf-bundle-module: {"file":null,"mtime":0,"wrapper":"json","format":"json","id":"fead16835712bc873dda7a42db9dd87bb2d59825-store/package.json"}
+require.memoize("fead16835712bc873dda7a42db9dd87bb2d59825-store/package.json", 
+{
+    "main": "fead16835712bc873dda7a42db9dd87bb2d59825-store/store.js",
+    "directories": {
+        "lib": "."
+    },
+    "dirpath": "../node_modules/store"
+}
+, {"filename":"../node_modules/store/package.json"});
 // @pinf-bundle-ignore: 
 });
 // @pinf-bundle-report: {}

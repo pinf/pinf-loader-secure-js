@@ -1,5 +1,5 @@
 // @pinf-bundle-ignore: 
-PINF.bundle("", function(require) {
+PINF.bundle("", function(require, global) {
 // @pinf-bundle-header: {"helper":"amd-ish"}
 function wrapAMD(callback) {
     var amdRequireImplementation = null;
@@ -212,7 +212,7 @@ exports.sandbox = function(sandboxIdentifier, sandboxOptions, loadedCallback, er
 
 }
 , {"filename":"sandbox.js"});
-// @pinf-bundle-module: {"file":"../node_modules/sjcl/sjcl.js","mtime":1425588300,"wrapper":"commonjs/leaky","format":"leaky","id":"74aebe51583a1aa6e83b78461af89adfd8bb7cda-sjcl/sjcl.js"}
+// @pinf-bundle-module: {"file":"../node_modules/sjcl/sjcl.js","mtime":1425932300,"wrapper":"commonjs/leaky","format":"leaky","id":"74aebe51583a1aa6e83b78461af89adfd8bb7cda-sjcl/sjcl.js"}
 require.memoize("74aebe51583a1aa6e83b78461af89adfd8bb7cda-sjcl/sjcl.js", 
 function(require, exports, module) {var __dirname = '../node_modules/sjcl';
 /** @fileOverview Javascript cryptography implementation.

@@ -36,7 +36,7 @@ exports.Bundles = function(rootPath, options) {
 			return callback(null, wrappedBundles[dataHash]);
 		}
 
-		var m = data.match(/^[\s\n\t\S]*(PINF\.bundle\(([^,]+),\s*function\s*\(\s*require\s*\)\s*\{)([\w\W\n\s\t\S]+)(\}\);?)[\s\n\t\S]*$/);
+		var m = data.match(/^[\s\n\t\S]*(PINF\.bundle\(([^,]+),\s*function\s*\(\s*require\s*(?:,\s*_____bundle_global\s*)?\)\s*\{)([\w\W\n\s\t\S]+)(\}\);?)[\s\n\t\S]*$/);
 		if (!m) {
 			console.log("data", data);
 			return callback(new Error("Could not parse bundle!"));

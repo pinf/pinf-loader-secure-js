@@ -10,9 +10,9 @@ const CRYPTO = require("crypto");
 exports.Bundles = function(rootPath, options) {
 
 	ASSERT.equal(typeof options, "object");
-	ASSERT.equal(typeof options.keys, "object");
-	ASSERT.equal(typeof options.keys.sig, "string");
-	ASSERT.equal(typeof options.keys.ver, "string");
+//	ASSERT.equal(typeof options.keys, "object");
+//	ASSERT.equal(typeof options.keys.sig, "string");
+//	ASSERT.equal(typeof options.keys.ver, "string");
 
 
 	var wrappedBundles = {};
